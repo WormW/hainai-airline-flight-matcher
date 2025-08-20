@@ -685,7 +685,7 @@
             });
 
             // 显示单机场城市（限制前20个）
-            singleAirportCities.slice(0, 20).forEach(cityName => {
+            singleAirportCities.slice(0, 100).forEach(cityName => {
                 const airports = cityGroups[cityName];
                 html += `<div class="suggestion-item" onmousedown="selectAirport('${type}', '${airports[0]}')">${airports[0]}</div>`;
             });
