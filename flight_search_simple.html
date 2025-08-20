@@ -356,6 +356,24 @@
             font-weight: bold;
         }
 
+        .suggestion-city-header {
+            background: #f0f8ff;
+            font-weight: bold;
+            color: #2c3e50;
+            border-bottom: 1px solid #ddd;
+            cursor: default;
+        }
+
+        .suggestion-city-header:hover {
+            background: #f0f8ff;
+        }
+
+        .suggestion-sub-item {
+            padding-left: 25px;
+            font-size: 13px;
+            color: #555;
+        }
+
         @media (max-width: 768px) {
             .content-area {
                 flex-direction: column;
@@ -594,10 +612,12 @@
             const query = input.value.toLowerCase();
 
             if (query.length === 0) {
-                suggestions.style.display = 'none';
+                // 没有输入内容时，显示所有机场（按城市分组）
+                showAllAirportsSuggestions(type);
                 return;
             }
 
+            // 有输入内容时，进行过滤搜索
             const matches = allAirports.filter(airport => {
                 const airportLower = airport.toLowerCase();
                 const airportPinyin = getPinyin(airport);
@@ -615,6 +635,42 @@
             } else {
                 suggestions.style.display = 'none';
             }
+        }
+
+        // 显示所有机场建议（按城市分组）
+        function showAllAirportsSuggestions(type) {
+            const suggestions = document.getElementById(`airport-${type}-suggestions`);
+
+            // 按城市分组
+            const cityGroups = {};
+            allAirports.forEach(airport => {
+                const cityName = airport.substring(0, 2); // 前两个字作为城市名
+                if (!cityGroups[cityName]) {
+                    cityGroups[cityName] = [];
+                }
+                cityGroups[cityName].push(airport);
+            });
+
+            let html = '';
+            // 按城市名排序
+            const sortedCities = Object.keys(cityGroups).sort();
+
+            sortedCities.slice(0, 15).forEach(cityName => { // 限制显示城市数量
+                const airports = cityGroups[cityName];
+                if (airports.length > 1) {
+                    // 多个机场的城市，显示城市名作为分组标题
+                    html += `<div class="suggestion-item suggestion-city-header">${cityName}市 (${airports.length}个机场)</div>`;
+                    airports.forEach(airport => {
+                        html += `<div class="suggestion-item suggestion-sub-item" onmousedown="selectAirport('${type}', '${airport}')">&nbsp;&nbsp;${airport}</div>`;
+                    });
+                } else {
+                    // 单个机场，直接显示
+                    html += `<div class="suggestion-item" onmousedown="selectAirport('${type}', '${airports[0]}')">${airports[0]}</div>`;
+                }
+            });
+
+            suggestions.innerHTML = html;
+            suggestions.style.display = 'block';
         }
 
         // 高亮匹配文本
@@ -635,6 +691,9 @@
             const input = document.getElementById(`airport-${type}-input`);
             if (input.value.length > 0) {
                 handleAirportSearch(type);
+            } else {
+                // 点击空输入框时，展开显示所有机场
+                showAllAirportsSuggestions(type);
             }
         }
 
