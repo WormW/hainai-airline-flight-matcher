@@ -528,17 +528,28 @@
 
         // 根据机场名获取城市名
         function getCityFromAirport(airport) {
-            for (const [city, airports] of Object.entries(cityMapping)) {
-                if (airports.includes(airport)) {
-                    return city;
-                }
+            const isCityMode = document.getElementById('city-mode').checked;
+
+            if (isCityMode) {
+                // 城市模式：使用前两个字作为城市名
+                return airport.substring(0, 2);
+            } else {
+                // 精确模式：返回完整机场名
+                return airport;
             }
-            return airport; // 如果找不到映射，返回原机场名
         }
 
         // 根据城市名获取所有机场
         function getAirportsFromCity(city) {
-            return cityMapping[city] || [city];
+            const isCityMode = document.getElementById('city-mode').checked;
+
+            if (isCityMode) {
+                // 城市模式：查找所有以该城市名开头的机场
+                return allAirports.filter(airport => airport.startsWith(city));
+            } else {
+                // 精确模式：返回单个机场
+                return [city];
+            }
         }
 
         // 检查两个机场是否属于同一城市
@@ -1080,36 +1091,61 @@
         // 更新搜索模式
         function updateSearchMode() {
             const isCityMode = document.getElementById('city-mode').checked;
-            const airportASelect = document.getElementById('airport-a');
-            const airportBSelect = document.getElementById('airport-b');
+            const isSingleMode = document.getElementById('single-mode').checked;
 
+            // 更新城市映射表（使用前两个字作为城市名）
             if (isCityMode) {
-                // 切换到城市模式，更新选项显示
-                updateAirportSelectsForCityMode();
-            } else {
-                // 切换回精确机场模式
-                updateAirportSelectsForAirportMode();
+                updateCityMappingFromAirports();
             }
 
             // 清空当前搜索结果
             document.getElementById('destinations-content').innerHTML =
-                '<div class="loading">请选择A机场和B机场，然后点击查找</div>';
+                '<div class="loading">请选择机场并点击查找</div>';
             document.getElementById('flights-content').innerHTML =
                 '<div class="loading">请先选择目的地机场</div>';
             currentDestinations = [];
             selectedDestination = null;
+
+            // 显示当前模式状态
+            console.log(`搜索模式更新: 城市模式=${isCityMode}, 单一往返模式=${isSingleMode}`);
+            if (isCityMode) {
+                console.log('城市映射表已更新，使用机场名前两个字作为城市名');
+            }
         }
 
-        // 为城市模式更新机场选择框
-        function updateAirportSelectsForCityMode() {
-            // 这里可以添加城市模式的特殊显示逻辑
-            // 目前保持原有的机场列表，但在搜索时会按城市匹配
+        // 根据机场名前两个字动态更新城市映射表
+        function updateCityMappingFromAirports() {
+            // 清空现有映射
+            Object.keys(cityMapping).forEach(key => delete cityMapping[key]);
+
+            // 根据所有机场名生成新的城市映射
+            const cityGroups = {};
+
+            allAirports.forEach(airport => {
+                // 提取城市名（前两个字）
+                const cityName = airport.substring(0, 2);
+
+                if (!cityGroups[cityName]) {
+                    cityGroups[cityName] = [];
+                }
+                cityGroups[cityName].push(airport);
+            });
+
+            // 只保留有多个机场的城市，或者明确包含"机场"字样的
+            Object.keys(cityGroups).forEach(cityName => {
+                const airports = cityGroups[cityName];
+                // 如果一个城市有多个机场，或者机场名包含常见的机场标识词
+                if (airports.length > 1 || airports.some(airport =>
+                    airport.includes('国际') || airport.includes('机场') ||
+                    airport.includes('航空') || airport.includes('港'))) {
+                    cityMapping[cityName] = airports;
+                }
+            });
+
+            console.log('动态生成的城市映射表:', cityMapping);
         }
 
-        // 为精确机场模式更新机场选择框
-        function updateAirportSelectsForAirportMode() {
-            // 恢复精确机场模式
-        }
+
 
         // 重置搜索
         function resetSearch() {
