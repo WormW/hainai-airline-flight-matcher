@@ -651,22 +651,43 @@
                 cityGroups[cityName].push(airport);
             });
 
+            // 调试信息：检查北京的分组
+            if (cityGroups['北京']) {
+                console.log('北京机场分组:', cityGroups['北京']);
+            }
+            console.log('总共机场数量:', allAirports.length);
+            console.log('城市分组数量:', Object.keys(cityGroups).length);
+
             let html = '';
             // 按城市名排序
             const sortedCities = Object.keys(cityGroups).sort();
 
-            sortedCities.slice(0, 15).forEach(cityName => { // 限制显示城市数量
+            // 先显示多机场城市，再显示单机场城市
+            const multiAirportCities = [];
+            const singleAirportCities = [];
+
+            sortedCities.forEach(cityName => {
                 const airports = cityGroups[cityName];
                 if (airports.length > 1) {
-                    // 多个机场的城市，显示城市名作为分组标题
-                    html += `<div class="suggestion-item suggestion-city-header">${cityName}市 (${airports.length}个机场)</div>`;
-                    airports.forEach(airport => {
-                        html += `<div class="suggestion-item suggestion-sub-item" onmousedown="selectAirport('${type}', '${airport}')">&nbsp;&nbsp;${airport}</div>`;
-                    });
+                    multiAirportCities.push(cityName);
                 } else {
-                    // 单个机场，直接显示
-                    html += `<div class="suggestion-item" onmousedown="selectAirport('${type}', '${airports[0]}')">${airports[0]}</div>`;
+                    singleAirportCities.push(cityName);
                 }
+            });
+
+            // 显示多机场城市（优先显示，限制前10个）
+            multiAirportCities.slice(0, 10).forEach(cityName => {
+                const airports = cityGroups[cityName];
+                html += `<div class="suggestion-item suggestion-city-header">${cityName} (${airports.length}个机场)</div>`;
+                airports.forEach(airport => {
+                    html += `<div class="suggestion-item suggestion-sub-item" onmousedown="selectAirport('${type}', '${airport}')">&nbsp;&nbsp;${airport}</div>`;
+                });
+            });
+
+            // 显示单机场城市（限制前20个）
+            singleAirportCities.slice(0, 20).forEach(cityName => {
+                const airports = cityGroups[cityName];
+                html += `<div class="suggestion-item" onmousedown="selectAirport('${type}', '${airports[0]}')">${airports[0]}</div>`;
             });
 
             suggestions.innerHTML = html;
